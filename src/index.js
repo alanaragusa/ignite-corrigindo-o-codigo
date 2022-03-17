@@ -8,12 +8,20 @@ app.use(express.json());
 
 const repositories = [];
 
+// GET - deve retornar uma lista de todos os repositórios cadastrados //
 app.get("/repositories", (request, response) => {
   return response.json(repositories);
 });
 
+// POST - rota recebe title, url e techs pelo corpo da requisição e retornar um objeto com as informações do repositório criado e status 201 //
 app.post("/repositories", (request, response) => {
   const { title, url, techs } = request.body
+
+  const repositoryAlreadyExists = repositories.some((repository) => repository.title === title);
+
+  if(repositoryAlreadyExists){
+    return response.status(400).json({error: "Repository already exists!"});
+  }
 
   const repository = {
     id: uuid(),
@@ -23,9 +31,12 @@ app.post("/repositories", (request, response) => {
     likes: 0
   };
 
-  return response.json(repository);
+  repositories.push(repository);
+
+  return response.status(201).json(repository);
 });
 
+// PUT - rota deve receber title, url e techs pelo corpo da requisição e o id do repositório pelo parametro da rota. Deve alterar apenas as informações recebidas pelo corpo da requisição e retornar esse repositório atualizado //
 app.put("/repositories/:id", (request, response) => {
   const { id } = request.params;
   const updatedRepository = request.body;
@@ -43,6 +54,7 @@ app.put("/repositories/:id", (request, response) => {
   return response.json(repository);
 });
 
+// DELETE - rota deve receber, pelo parametro da rota, o id do repositório que deve ser excluido e retornar um status 204 após a exclusão //
 app.delete("/repositories/:id", (request, response) => {
   const { id } = request.params;
 
@@ -57,6 +69,7 @@ app.delete("/repositories/:id", (request, response) => {
   return response.status(204).send();
 });
 
+// POST - rota deve receber, pelo parametro da rota, o id do repositório que deve receber o like e retornar o repositório com as quantidades de likes atualizadas //
 app.post("/repositories/:id/like", (request, response) => {
   const { id } = request.params;
 
