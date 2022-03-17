@@ -8,6 +8,21 @@ app.use(express.json());
 
 const repositories = [];
 
+// middlewarwe //
+function checkExistsRepositories(request, response, next) {
+  const { title } = request.headers;
+
+  const repository = repositories.find(repository => repository.title === title);
+
+  if(!repository) {
+    return response.status(404).json({error: "Repository not found"});
+  }
+
+  request.repository = repository;
+
+  return next();
+};
+
 // GET - deve retornar uma lista de todos os repositórios cadastrados //
 app.get("/repositories", (request, response) => {
   return response.json(repositories);
@@ -15,7 +30,7 @@ app.get("/repositories", (request, response) => {
 
 // POST - rota recebe title, url e techs pelo corpo da requisição e retornar um objeto com as informações do repositório criado e status 201 //
 app.post("/repositories", (request, response) => {
-  const { title, url, techs } = request.body
+  const { title, url, techs } = request.body;
 
   const repositoryAlreadyExists = repositories.some((repository) => repository.title === title);
 
@@ -55,18 +70,18 @@ app.put("/repositories/:id", (request, response) => {
 });
 
 // DELETE - rota deve receber, pelo parametro da rota, o id do repositório que deve ser excluido e retornar um status 204 após a exclusão //
-app.delete("/repositories/:id", (request, response) => {
+app.delete("/repositories/:id", checkExistsRepositories, (request, response) => {
+  const { repository } = request;
   const { id } = request.params;
 
-  repositoryIndex = repositories.findIndex(repository => repository.id === id);
+  const repositoryIndex = repository.id.indexOf(id);
 
-  if (repositoryIndex > 0) {
+  if (repositoryIndex === -1) {
     return response.status(404).json({ error: "Repository not found" });
   }
+  repository.id.splice(repositoryIndex, 1);
 
-  repositories.splice(repositoryIndex, 1);
-
-  return response.status(204).send();
+  return response.status(204).json();
 });
 
 // POST - rota deve receber, pelo parametro da rota, o id do repositório que deve receber o like e retornar o repositório com as quantidades de likes atualizadas //
